@@ -1,2 +1,4 @@
 node_modules
 elm-stuff
+.scripts
+src/daily-client/test
