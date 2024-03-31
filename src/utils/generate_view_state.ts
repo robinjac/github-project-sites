@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { main_branches, branch_types, slug } from "../update-daily/helpers";
 
 const generatedProjectNames = new Map();
@@ -208,6 +209,15 @@ for (let i = 0; i < 5; i++) {
         branches
     };
     view_state.projects.push(project);
+}
+
+const filePath = './src/daily-client/test/view_state.json';
+
+// Check if the file exists
+if (!fs.existsSync(filePath)) {
+    // If it doesn't exist, create the necessary directories
+    const directory = path.dirname(filePath);
+    fs.mkdirSync(directory, { recursive: true });
 }
 
 fs.writeFileSync(
