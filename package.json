@@ -1,0 +1,26 @@
+{
+    "name": "daily-site",
+    "version": "0.0.0",
+    "license": "MIT",
+    "scripts": {
+        "tsc:watch": "yarn tsc --watch",
+        "build:update-daily": "esbuild src/update-daily/update_daily.ts --platform=node --bundle --minify --outfile=../../.scripts/update_daily.js",
+        "build:generate-view-state": "esbuild src/utils/generate_view_state.ts --platform=node --bundle --outfile=.scripts/generate_view_state.js",
+        "dev": "vite --open",
+        "build": "tsc && vite build",
+        "serve": "vite preview",
+        "test:generate-view-state": "yarn build:generate-view-state && node .scripts/generate_view_state.js",
+        "test": "echo test"
+    },
+    "devDependencies": {
+        "@types/node": "^16.0.0",
+        "autoprefixer": "^10.3.1",
+        "esbuild": "^0.12.20",
+        "postcss": "^8.3.6",
+        "postcss-import": "^14.0.2",
+        "tailwindcss": "^2.2.7",
+        "typescript": "^4.3.2",
+        "vite": "^2.4.4",
+        "vite-plugin-elm": "^2.4.2"
+    }
+}
