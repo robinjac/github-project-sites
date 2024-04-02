@@ -1,0 +1,62 @@
+name: Update Daily Site
+
+on: [push, delete]
+
+concurrency:
+    group: ${{ github.ref }}${{ github.actor }}
+    cancel-in-progress: true
+jobs:
+    delete-from-daily:
+        if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }} # By default the delete event triggers on many things, but we only want this to run when a branch is deleted.
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout 🛎️
+          uses: actions/checkout@v2.3.1
+        - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
+          uses: rlespinasse/github-slug-action@v3.x
+        - name: Delete Files on Daily 🚀
+          run: |
+            mkdir tmp
+            git config --global user.email ${{ github.actor }}
+            git config --global user.name ${{ github.actor }}
+            git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git" tmp
+            rm -rf tmp/awesome-apps/${{ env.GITHUB_REF_SLUG }}/
+            node .scripts/update_daily "[GHA] awesome-apps elm-svelte-app DELETED ${{ github.ref }}"
+            cd tmp
+            git add .
+            git commit --allow-empty --message "[GHA] DELETED ${{ github.ref }}"
+            git push -u origin HEAD:master
+    deploy-to-daily:
+        if: ${{ github.event_name == 'push' && github.actor != 'dependabot[bot]' }} # We only want to run this on push by a user and not a bot.
+        runs-on: ubuntu-latest
+        steps:
+        - name: Set Branch Action
+          run: | # CREATED = branch did not exist before, UPDATED = updating existing branch.
+            if [[ ${{ github.event.created }} == true ]]; then
+                echo "branch_action=CREATED" >> $GITHUB_ENV
+            else
+                echo "branch_action=UPDATED" >> $GITHUB_ENV
+            fi
+        - name: Checkout 🛎️
+          uses: actions/checkout@v2.3.1
+        - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
+          uses: rlespinasse/github-slug-action@v3.x
+        - name: Install and Build 🔧
+          run: | # Install npm packages and build the Storybook files.
+            yarn
+            yarn elm-svelte-app build:storybook
+        - name: Rename 'storybook-static' to Current Branch Name
+          run: mv packages/elm-svelte-app/storybook-static packages/elm-svelte-app/${{ env.GITHUB_REF_SLUG }}
+        - name: Push to Daily Site 🚀
+          run: |
+            mkdir tmp
+            git config --global user.email ${{ github.actor }}
+            git config --global user.name ${{ github.actor }}
+            git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git" tmp
+            rm -rf tmp/awesome-apps/${{ env.GITHUB_REF_SLUG }}/
+            cp -a packages/elm-svelte-app/${{ env.GITHUB_REF_SLUG }}/. tmp/awesome-apps/${{ env.GITHUB_REF_SLUG }}/
+            node .scripts/update_daily "[GHA] awesome-apps elm-svelte-app ${{ env.branch_action }} ${{ github.ref }}"
+            cd tmp
+            git add .
+            git commit --allow-empty --message "[GHA] ${{ env.branch_action }} ${{ github.ref }}"
+            git push -u origin HEAD:master
