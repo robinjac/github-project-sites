@@ -5,8 +5,8 @@
   "scripts": {
     "tsc:watch": "tsc --watch",
     "build": "npm run build:update-daily && npm run build:generate-view-state && npm run build:daily-client",
-    "build:update-daily": "esbuild src/update-daily/update_daily.ts --platform=node --bundle --minify --outfile=../../.scripts/update_daily.js",
-    "build:generate-view-state": "esbuild src/utils/generate_view_state.ts --platform=node --bundle --outfile=.scripts/generate_view_state.js",
+    "build:update-daily": "esbuild src/update-daily/update_daily.ts --platform=node --bundle --minify --outfile=.scripts/update_daily.js",
+    "build:generate-view-state": "esbuild src/utils/generate_view_state.ts --platform=node --bundle --minify --outfile=.scripts/generate_view_state.js",
     "start": "vite --open",
     "build:daily-client": "tsc && vite build",
     "serve": "vite preview",
