@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { main_branches, branch_types, slug } from "../update-daily/helpers";
 
+
+const [,,output] = process.argv.filter((arg) => arg !== "--experimental-modules")
+
 const generatedProjectNames = new Map();
 const generatedBranchNames: string[] = [];
 const generatedUsers: string[] = [];
@@ -211,17 +214,16 @@ for (let i = 0; i < 5; i++) {
     view_state.projects.push(project);
 }
 
-const filePath = './src/daily-client/test/view_state.json';
+const filepath = (output ?? __dirname) + "/view_state.json";
 
-// Check if the file exists
-if (!fs.existsSync(filePath)) {
+// Check if the folder exists
+if (!fs.existsSync(filepath)) {
     // If it doesn't exist, create the necessary directories
-    const directory = path.dirname(filePath);
-    fs.mkdirSync(directory, { recursive: true });
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
 }
 
 fs.writeFileSync(
-    `./src/daily-client/test/view_state.json`,
+    filepath,
     JSON.stringify(view_state, null, 4)
 );
 

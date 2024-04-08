@@ -5,13 +5,14 @@
   "scripts": {
     "tsc:watch": "tsc --watch",
     "build": "npm run build:update-daily && npm run build:generate-view-state && npm run build:daily-client",
-    "build:update-daily": "esbuild src/update-daily/update_daily.ts --platform=node --bundle --minify --outfile=.scripts/update_daily.js",
-    "build:generate-view-state": "esbuild src/utils/generate_view_state.ts --platform=node --bundle --minify --outfile=.scripts/generate_view_state.js",
+    "build:update-daily": "esbuild src/update-daily/update_daily.ts --format=cjs --platform=node --bundle --minify --outfile=.scripts/update_daily.cjs",
+    "build:generate-view-state": "esbuild src/utils/generate_view_state.ts --format=cjs --platform=node --bundle --minify --outfile=.scripts/generate_view_state.cjs",
     "start": "vite --open",
     "build:daily-client": "tsc && vite build",
     "serve": "vite preview",
-    "test:generate-view-state": "npm run build:generate-view-state && node .scripts/generate_view_state.js",
-    "test": "echo test"
+    "test:generate-view-state": "npm run build:generate-view-state && node .scripts/generate_view_state.cjs ./src/daily-client/test",
+    "test": "tsc && npm run test:generate-view-state",
+    "generate-view-state": "npm run build:generate-view-state && node .scripts/generate_view_state.cjs"
   },
   "devDependencies": {
     "@types/node": "^16.0.0",
