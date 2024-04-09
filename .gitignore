@@ -3,3 +3,4 @@ elm-stuff
 .scripts
 src/daily-client/test
 dist
+.env
