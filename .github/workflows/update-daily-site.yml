@@ -3,58 +3,57 @@ name: Update Daily Site
 on: [push, delete]
 
 concurrency:
-    group: ${{ github.ref }}${{ github.actor }}
-    cancel-in-progress: true
+  group: ${{ github.ref }}${{ github.actor }}
+  cancel-in-progress: true
 jobs:
-    delete-from-daily:
-        if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }} # By default the delete event triggers on many things, but we only want this to run when a branch is deleted.
-        runs-on: ubuntu-latest
-        steps:
-        - name: Checkout 🛎️
-          uses: actions/checkout@v2.3.1
-        - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
-          uses: rlespinasse/github-slug-action@v3.x
-        - name: Delete Files on Daily 🚀
-          run: |
-            mkdir tmp
-            git config --global user.email ${{ github.actor }}
-            git config --global user.name ${{ github.actor }}
-            git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git" tmp
-            rm -rf tmp/[project name]/${{ env.GITHUB_REF_SLUG }}/
-            node .scripts/update_daily "[GHA] [project name]  DELETED ${{ github.ref }}"
-            cd tmp
-            git add .
-            git commit --allow-empty --message "[GHA] DELETED ${{ github.ref }}"
-            git push -u origin HEAD:master
-    deploy-to-daily:
-        if: ${{ github.event_name == 'push' && github.actor != 'dependabot[bot]' }} # We only want to run this on push by a user and not a bot.
-        runs-on: ubuntu-latest
-        steps:
-        - name: Set Branch Action
-          run: | # CREATED = branch did not exist before, UPDATED = updating existing branch.
-            if [[ ${{ github.event.created }} == true ]]; then
-                echo "branch_action=CREATED" >> $GITHUB_ENV
-            else
-                echo "branch_action=UPDATED" >> $GITHUB_ENV
-            fi
-        - name: Checkout 🛎️
-          uses: actions/checkout@v2.3.1
-        - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
-          uses: rlespinasse/github-slug-action@v3.x
-          ## Install and build your stuff within here
-        - name: Install, build and do things 🔧
-          run: |
-            echo "put your build stuff here"
-        - name: Push to Daily Site 🚀
-          run: |
-            mkdir tmp
-            git config --global user.email ${{ github.actor }}
-            git config --global user.name ${{ github.actor }}
-            git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git" tmp
-            rm -rf tmp/[project name]/${{ env.GITHUB_REF_SLUG }}/
-            cp -a packages//${{ env.GITHUB_REF_SLUG }}/. tmp/[project name]/${{ env.GITHUB_REF_SLUG }}/
-            node .scripts/update_daily "[GHA] [project name]  ${{ env.branch_action }} ${{ github.ref }}"
-            cd tmp
-            git add .
-            git commit --allow-empty --message "[GHA] ${{ env.branch_action }} ${{ github.ref }}"
-            git push -u origin HEAD:master
+  delete-from-daily:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }} # By default the delete event triggers on many things, but we only want this to run when a branch is deleted.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+      - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Delete Files on Daily 🚀
+        run: |
+          git config --global user.email ${{ github.actor }}
+          git config --global user.name ${{ github.actor }}
+          git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git"
+          rm -rf [project name]/${{ env.GITHUB_REF_SLUG }}/
+          git add .
+          git commit --allow-empty --message "[GHA] DELETED ${{ github.ref }}"
+          git push -u origin HEAD:master
+  deploy-to-daily:
+    if: ${{ github.event_name == 'push' && github.actor != 'dependabot[bot]' }} # We only want to run this on push by a user and not a bot.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Branch Action
+        run:
+          | # CREATED = branch did not exist before, UPDATED = updating existing branch.
+          if [[ ${{ github.event.created }} == true ]]; then
+              echo "branch_action=CREATED" >> $GITHUB_ENV
+          else
+              echo "branch_action=UPDATED" >> $GITHUB_ENV
+          fi
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+      - name: Inject GIT Slug/Short Variables # Exposes git variables in a slug format (/ turns to - etc).
+        uses: rlespinasse/github-slug-action@v3.x
+        ## Install and build your stuff within here
+      - name: Install, build and do things 🔧
+        run: |
+          echo "put your build stuff here"
+      - name: Push to Daily Site 🚀
+        run: |
+          git config --global user.email ${{ github.actor }}
+          git config --global user.name ${{ github.actor }}
+          git clone --single-branch --branch master "https://${{ secrets.API_TOKEN_GITHUB }}@github.com/robinjac/daily-sites.git"
+          rm -rf [project name]/${{ env.GITHUB_REF_SLUG }}/
+          mkdir [project name]/${{ env.GITHUB_REF_SLUG }}/branch
+          cp -a [your build files folder]/. [project name]/${{ env.GITHUB_REF_SLUG }}/branch
+          cd [project name]/${{ env.GITHUB_REF_SLUG }}
+          node .scripts/update_daily ${{ github.ref }}
+          cd -
+          git add .
+          git commit --allow-empty --message "[GHA] ${{ env.branch_action }} ${{ github.ref }}"
+          git push -u origin HEAD:master

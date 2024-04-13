@@ -133,25 +133,3 @@ function trailHyphen(envVar: string): string {
 function replaceAnyNonAlphanumericCharacter(envVar: string): string {
     return envVar.replace(RegExp("[^a-zA-Z0-9._]", "g"), "-");
 }
-
-export function extractCommitData(commit_title: string): { actor: string, action: TDailyAction, project_name: string, repository: string, branch_name: string } {
-
-    const commit_title_parts = commit_title.split(" ");
-
-    const actor = commit_title_parts.shift() as string;
-
-    const repository = commit_title_parts.shift() as string;
-
-    const project_name =
-        commit_title_parts.length === 2 ? repository : commit_title_parts.shift() as string;
-    const action = commit_title_parts.shift() as TDailyAction;
-    const branch_name = commit_title_parts.shift() as string;
-
-    return {
-        actor,
-        action,
-        project_name,
-        repository,
-        branch_name
-    }
-}

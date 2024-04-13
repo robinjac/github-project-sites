@@ -1,10 +1,7 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { extractCommitData } from "./helpers";
 
-const { branch_name } = extractCommitData(
-  process.argv.filter((arg) => arg !== "--experimental-modules")[2]
-);
+const branch_name = process.argv.filter((arg) => arg !== "--experimental-modules")[2];
 
 // Define the file path
 const filePath = join(__dirname, "branch.json");
