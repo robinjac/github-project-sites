@@ -4,12 +4,8 @@
   "license": "MIT",
   "scripts": {
     "tsc:watch": "tsc --watch",
-    "build": "npm run build:update-daily && npm run build:generate-view-state && npm run build:daily-client",
-    "build:create-branch-metadata": "esbuild src/create-branch-metadata.ts --format=cjs --platform=node --bundle --minify --outfile=.scripts/create-branch-metadata.cjs",
     "start": "vite --open",
-    "build:daily-client": "tsc && vite build",
-    "serve": "vite preview",
-    "create-branch-metadata": "npm run build:create-branch-metadata && node .scripts/create-branch-metadata.cjs"
+    "build": "tsc && vite build"
   },
   "devDependencies": {
     "@types/node": "^16.0.0",
