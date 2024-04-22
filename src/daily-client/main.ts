@@ -1,31 +1,23 @@
 // @ts-ignore
 import { Elm } from "./elm/Main.elm";
 
-import view_state from "./test/view_state.json";
+import view_state from "./test/view_state_2.json";
 
-type Slug = `${string}-${string}${string}`;
-type BranchType = `${string}`;
-type Date = `${string}-${string}-${string} ${string}:${string}`;
-
-type Branch = {
-    name: string;
-    slug: Slug;
-    date: Date;
-};
-
-type Project = {
-    name: string;
-    repository: string;
-    branches: { [branchType: BranchType]: Branch[] };
-};
-
-type ViewState = {
-    id: number;
-    host_repository: string;
-    projects: Project[];
-};
+const projects = Object.entries(view_state).map(([projectName, branch]) => ({
+  name: projectName,
+  branches: Object.entries(branch).map(([branchSlug, data]) => ({
+    name: data.name,
+    slug: branchSlug,
+    date: data.date,
+  })),
+}));
 
 Elm.Main.init({
-    flags: view_state as ViewState,
-    node: document.getElementById("app") as HTMLElement,
+  flags: {
+    owner: "robinjac",
+    hostRepository: "daily-sites",
+    selectedProject: projects[0],
+    projects,
+  },
+  node: document.getElementById("app") as HTMLElement,
 });

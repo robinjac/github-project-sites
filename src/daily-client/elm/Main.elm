@@ -8,40 +8,24 @@ import Html.Events exposing (onClick, onInput)
 import Maybe exposing (withDefault)
 
 
-type alias SiteMetaData =
-    { id : Int
+type alias DailySiteData =
+    { owner : String
+    , selectedProject : Project
     , projects : List Project
-    , host_repository : String
+    , hostRepository : String
     }
 
 
-type alias BranchData =
+type alias Branch =
     { name : String
     , slug : String
     , date : String
     }
 
 
-type alias Branches =
-    List BranchData
-
-
 type alias Project =
     { name : String
-    , repository : String
-    , branches : BranchRecord
-    }
-
-
-type alias Projects =
-    Dict String Project
-
-
-type alias BranchRecord =
-    { main : Branches
-    , release : Branches
-    , user : Branches
-    , other : Branches
+    , branches : List Branch
     }
 
 
@@ -52,25 +36,17 @@ type Page
     | Next
 
 
+type alias DailySiteState model =
+    { model | currentPageIndex : Int }
+
+
 type alias Model =
-    { selectedProject : Maybe Project
-    , selectedBranchType : String
-    , projects : Projects
-    , branches : Maybe Branches
-    , currentPageIndex : Int
-    , hostRepository : String
-    }
+    DailySiteState DailySiteData
 
 
 type Msg
-    = SelectProject String
-    | SelectBranchType String
+    = SelectProject Project
     | Pagination Page
-
-
-branchTypes : List String
-branchTypes =
-    [ "main", "release", "user", "other" ]
 
 
 maxRows : Int
@@ -78,51 +54,16 @@ maxRows =
     10
 
 
-getBranchesByType : String -> BranchRecord -> Branches
-getBranchesByType branchType branchRecord =
-    case branchType of
-        "main" ->
-            branchRecord.main
-
-        "release" ->
-            branchRecord.release
-
-        "user" ->
-            branchRecord.user
-
-        _ ->
-            branchRecord.other
-
-
-getBranches : Maybe Project -> String -> Projects -> Maybe Branches
-getBranches project branchType projects =
-    Maybe.andThen
-        (\{ name } ->
-            Dict.get name projects
-                |> Maybe.map (.branches >> getBranchesByType branchType)
-        )
-        project
-
-
-init : SiteMetaData -> ( Model, Cmd Msg )
+init : DailySiteData -> ( Model, Cmd Msg )
 init meta =
-    let
-        firstProject =
-            List.head meta.projects
-
-        projects =
-            meta.projects |> List.map (\project -> ( project.name, project )) |> Dict.fromList
-
-        model =
-            { selectedBranchType = "main"
-            , selectedProject = firstProject
-            , projects = projects
-            , branches = Maybe.map (.branches >> .main) firstProject
-            , currentPageIndex = 0
-            , hostRepository = meta.host_repository
-            }
-    in
-    ( model, Cmd.none )
+    ( { selectedProject = meta.selectedProject
+      , projects = meta.projects
+      , hostRepository = meta.hostRepository
+      , owner = meta.owner
+      , currentPageIndex = 0
+      }
+    , Cmd.none
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -130,7 +71,7 @@ subscriptions _ =
     Sub.none
 
 
-main : Program SiteMetaData Model Msg
+main : Program DailySiteData Model Msg
 main =
     Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
 
@@ -138,20 +79,13 @@ main =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SelectBranchType branchType ->
-            ( { model | selectedBranchType = branchType, branches = getBranches model.selectedProject branchType model.projects, currentPageIndex = 0 }, Cmd.none )
-
-        SelectProject projectName ->
-            let
-                project =
-                    Dict.get projectName model.projects
-            in
-            ( { model | selectedProject = project, branches = getBranches project model.selectedBranchType model.projects, currentPageIndex = 0 }, Cmd.none )
+        SelectProject project ->
+            ( { model | selectedProject = project, currentPageIndex = 0 }, Cmd.none )
 
         Pagination page ->
             let
                 maxIndex =
-                    List.length (withDefault [] model.branches) // maxRows
+                    List.length model.selectedProject.branches // maxRows
 
                 nextPageIndex =
                     case page of
@@ -178,22 +112,22 @@ update msg model =
             ( { model | currentPageIndex = nextPageIndex }, Cmd.none )
 
 
-dailyUrl : Model -> BranchData -> Maybe String
-dailyUrl { selectedProject, hostRepository } data =
-    Maybe.map (\{ name } -> String.join "/" [ "/" ++ hostRepository, name, data.slug ]) selectedProject
+dailyUrl : Model -> Branch -> String
+dailyUrl { selectedProject, hostRepository } branch =
+    String.join "/" [ "/" ++ hostRepository, .name selectedProject, branch.slug, "branch" ]
 
 
-rowElement : Model -> RowType -> BranchData -> Html Msg
-rowElement model rowType data =
+rowElement : Model -> RowType -> Branch -> Html Msg
+rowElement model rowType branch =
     Html.tr [ rowClass rowType ]
         [ Html.td []
-            [ Html.text data.name
+            [ Html.text branch.name
             ]
-        , Html.td [ class "w-40" ] [ Html.text data.date ]
+        , Html.td [ class "w-40" ] [ Html.text branch.date ]
         , Html.td [ class "w-10 text-center" ]
             [ Html.a
                 [ class "px-1 border font-bold border-gray-300 bg-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white rounded"
-                , Attr.href (withDefault "" (dailyUrl model data))
+                , Attr.href (dailyUrl model branch)
                 ]
                 [ Html.text "+" ]
             ]
@@ -204,7 +138,7 @@ layout : Model -> Html Msg
 layout model =
     let
         reversed =
-            model.branches |> withDefault [] |> List.reverse
+            List.reverse model.selectedProject.branches
 
         visibleRows =
             reversed
@@ -269,27 +203,31 @@ content : Model -> Html Msg
 content model =
     selectField
         [ availableProjects model
-        , availableBranches
         ]
 
 
 availableProjects : Model -> Html Msg
 availableProjects model =
-    Dict.keys model.projects |> selectDropdown (onInput SelectProject)
-
-
-availableBranches : Html Msg
-availableBranches =
-    branchTypes |> selectDropdown (onInput SelectBranchType)
-
-
-selectDropdown : Attribute Msg -> List String -> Html Msg
-selectDropdown handleClick items =
     let
-        render item =
-            Html.option [ value item ] [ Html.text item ]
+        toProject projects input =
+            SelectProject <|
+                case List.filter (\project -> project.name == input) projects of
+                    [ project ] ->
+                        project
+
+                    _ ->
+                        model.selectedProject
     in
-    items |> List.map render |> Html.select [ class " text-gray-900 cursor-pointer", handleClick ]
+    model.projects |> selectDropdown (onInput (toProject model.projects))
+
+
+selectDropdown : Attribute Msg -> List Project -> Html Msg
+selectDropdown handleClick projects =
+    let
+        render project =
+            Html.option [ value project.name ] [ Html.text project.name ]
+    in
+    projects |> List.map render |> Html.select [ class " text-gray-900 cursor-pointer", handleClick ]
 
 
 selectField : List (Html msg) -> Html msg
