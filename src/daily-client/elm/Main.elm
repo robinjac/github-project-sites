@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attr exposing (class, colspan, value)
 import Html.Events exposing (onClick, onInput)
+import Icons
 import Maybe exposing (withDefault)
 
 
@@ -124,12 +125,12 @@ rowElement model rowType branch =
             [ Html.text branch.name
             ]
         , Html.td [ class "w-40" ] [ Html.text branch.date ]
-        , Html.td [ class "w-10 text-center" ]
+        , Html.td [ class "w-10 flex justify-center items-center" ]
             [ Html.a
-                [ class "px-1 border font-bold border-gray-300 bg-gray-200 text-gray-900 hover:bg-gray-900 hover:text-white rounded"
+                [ class "text-gray-900"
                 , Attr.href (dailyUrl model branch)
                 ]
-                [ Html.text "+" ]
+                [ Icons.newWindow ]
             ]
         ]
 
@@ -251,16 +252,16 @@ pagination page rows pages =
             page * maxRows
 
         liClasses =
-            "border font-bold border-gray-300 bg-gray-200 text-gray-900 rounded-md mr-1 text-center leading-8 w-8 h-8 cursor-pointer select-none"
+            "border border-gray-300 bg-gray-200 text-gray-900 rounded-md mr-1 w-8 h-8 cursor-pointer select-none inline-flex justify-center items-center"
     in
-    Html.nav [ class "w-full flex justify-between mt-auto" ]
-        [ Html.div [ class "flex items-center ml-2" ] [ Html.text (String.fromInt (1 + visablePages) ++ "-" ++ String.fromInt (rows + visablePages)), Html.text (" of " ++ String.fromInt pages) ]
-        , Html.ul
-            [ class "flex list-none mr-2" ]
-            [ Html.li [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Start) ] [ Html.text "|<" ]
-            , Html.li [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Prev) ] [ Html.text "<" ]
-            , Html.li [ class (liClasses ++ shouldDisable (1 + visablePages + maxRows >= pages)), onClick (Pagination Next) ] [ Html.text ">" ]
-            , Html.li [ class (liClasses ++ shouldDisable (1 + visablePages + maxRows >= pages)), onClick (Pagination End) ] [ Html.text ">|" ]
+    Html.nav [ class "w-full flex justify-between items-center mt-auto" ]
+        [ Html.div [ class "inline-flex items-center ml-2" ] [ Html.text (String.fromInt (1 + visablePages) ++ "-" ++ String.fromInt (rows + visablePages)), Html.text (" of " ++ String.fromInt pages) ]
+        , Html.div
+            [ class "inline-flex mr-2" ]
+            [ Html.div [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Start) ] [ Icons.chevronDoubleLeft ]
+            , Html.div [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Prev) ] [ Icons.chevronLeft ]
+            , Html.div [ class (liClasses ++ shouldDisable (1 + visablePages + maxRows >= pages)), onClick (Pagination Next) ] [ Icons.chevronRight ]
+            , Html.div [ class (liClasses ++ shouldDisable (1 + visablePages + maxRows >= pages)), onClick (Pagination End) ] [ Icons.chevronDoubleRight ]
             ]
         ]
 
