@@ -225,14 +225,14 @@ selectDropdown : Attribute Msg -> List Project -> Html Msg
 selectDropdown handleClick projects =
     let
         render project =
-            Html.option [ value project.name ] [ Html.text project.name ]
+            Html.option [] [ Html.text project.name ]
     in
-    projects |> List.map render |> Html.select [ class " text-gray-900 cursor-pointer", handleClick ]
+    projects |> List.map render |> Html.select [ class " text-gray-900 cursor-pointer pr-1 outline-none", handleClick ]
 
 
 selectField : List (Html msg) -> Html msg
 selectField selects =
-    Html.div [ class "flex flex-row justify-between border border-gray-300 rounded-md p-1 w-60 select-none" ] selects
+    Html.div [ class "flex flex-row justify-between border border-gray-300 rounded-md p-2 w-min select-none" ] selects
 
 
 shouldDisable : Bool -> String
