@@ -155,7 +155,7 @@ layout model =
         rows =
             firstRows ++ lastRow
     in
-    Html.div [ class "md:container md:mx-auto mt-16 p-2 border min-h-664 border-gray-200 rounded-md flex flex-col justify-self-start" ]
+    Html.div [ class "md:container md:mx-auto shadow-md mt-16 p-2 border min-h-664 border-gray-200 rounded-md flex flex-col justify-self-start" ]
         [ content model
         , dailyTable rows
         , pagination model.currentPageIndex (List.length visibleRows) (List.length reversed)
