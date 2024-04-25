@@ -123,7 +123,10 @@ formatIso8601 : String -> String
 formatIso8601 str =
     case Iso8601.toTime str of
         Ok posix ->
-            Iso8601.fromTime posix |> String.dropRight 5 |> String.split "T" |> String.join " "
+            Iso8601.fromTime posix
+                |> String.dropRight 5
+                |> String.split "T"
+                |> String.join " "
 
         Err _ ->
             "N/A"
@@ -136,7 +139,7 @@ rowElement model rowType branch =
             [ Html.text branch.name
             ]
         , Html.td [ class "w-40" ] [ Html.text (formatIso8601 branch.date) ]
-        , Html.td [ class "w-10 flex justify-center items-center" ]
+        , Html.td [ class "w-20 h-12 flex justify-end items-center" ]
             [ Html.a
                 [ class "text-gray-900"
                 , Attr.href (dailyUrl model branch)
@@ -204,7 +207,7 @@ dailyTable rows =
             [ Html.tr [ rowClass NotLastRow ]
                 [ Html.th [ class "text-left" ] [ Html.text "Branch" ]
                 , Html.th [ class "text-left w-40" ] [ Html.text "Updated" ]
-                , Html.th [ class "text-center w-10" ] [ Html.text "Site" ]
+                , Html.th [ class "text-right w-20" ] [ Html.text "Site" ]
                 ]
             ]
         , Html.tbody [] (tableContent rows)
