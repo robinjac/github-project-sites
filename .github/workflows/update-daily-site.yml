@@ -72,7 +72,7 @@ jobs:
           cat << EOF > "tmp/${{ env.REPO_SLUG }}/${{ env.REF_SLUG }}/branch.json" 
           {
             "name": "${{ env.REF_SLUG }}",
-            "date": "$(date -u)"
+            "date": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           }
           EOF
 
