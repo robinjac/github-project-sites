@@ -149,33 +149,6 @@ rowElement model rowType branch =
         ]
 
 
-layout : Model -> Html Msg
-layout model =
-    let
-        reversed =
-            List.reverse model.selectedProject.branches
-
-        visibleRows =
-            reversed
-                |> List.drop (model.currentPageIndex * maxRows)
-                |> List.take maxRows
-
-        lastRow =
-            List.take 1 visibleRows |> List.map (rowElement model LastRow)
-
-        firstRows =
-            List.drop 1 visibleRows |> List.map (rowElement model NotLastRow)
-
-        rows =
-            firstRows ++ lastRow
-    in
-    Html.div [ class "md:container md:mx-auto shadow-md mt-16 p-2 border min-h-664 border-gray-200 rounded-md flex flex-col justify-self-start" ]
-        [ content model
-        , dailyTable rows
-        , pagination model.currentPageIndex (List.length visibleRows) (List.length reversed)
-        ]
-
-
 type RowType
     = LastRow
     | NotLastRow
@@ -191,17 +164,8 @@ rowClass row =
             class "h-12 border-b border-gray-200 "
 
 
-tableContent : List (Html Msg) -> List (Html Msg)
-tableContent rows =
-    if List.length rows == 0 then
-        [ Html.tr [ rowClass LastRow ] [ Html.td [ colspan 3, class "text-center" ] [ Html.text "No branches" ] ] ]
-
-    else
-        rows
-
-
-dailyTable : List (Html Msg) -> Html Msg
-dailyTable rows =
+tableBody : List (Html Msg) -> Html Msg
+tableBody rows =
     Html.table [ class "mt-8 w-full box-content" ]
         [ Html.thead []
             [ Html.tr [ rowClass NotLastRow ]
@@ -210,12 +174,20 @@ dailyTable rows =
                 , Html.th [ class "text-right w-20" ] [ Html.text "Site" ]
                 ]
             ]
-        , Html.tbody [] (tableContent rows)
+        , Html.tbody [] <|
+            if List.isEmpty rows then
+                [ Html.tr [ class "h-12" ]
+                    [ Html.td [ colspan 3, class "text-center" ] [ Html.text "No branches" ]
+                    ]
+                ]
+
+            else
+                rows
         ]
 
 
-content : Model -> Html Msg
-content model =
+tableHeader : Model -> Html Msg
+tableHeader model =
     selectField
         [ availableProjects model
         ]
@@ -246,8 +218,8 @@ selectDropdown handleClick projects =
 
 
 selectField : List (Html msg) -> Html msg
-selectField selects =
-    Html.div [ class "flex flex-row justify-between border border-gray-300 rounded-md p-2 w-min select-none" ] selects
+selectField =
+    Html.div [ class "flex flex-row justify-between border border-gray-300 rounded-md p-2 w-min select-none" ]
 
 
 shouldDisable : Bool -> String
@@ -280,6 +252,36 @@ pagination page rows pages =
         ]
 
 
+table : Model -> Html Msg
+table model =
+    let
+        reversed =
+            List.reverse model.selectedProject.branches
+
+        visibleRows =
+            reversed
+                |> List.drop (model.currentPageIndex * maxRows)
+                |> List.take maxRows
+
+        lastRow =
+            List.take 1 visibleRows |> List.map (rowElement model LastRow)
+
+        firstRows =
+            List.drop 1 visibleRows |> List.map (rowElement model NotLastRow)
+
+        rows =
+            firstRows ++ lastRow
+    in
+    Html.div [ class "max-w-screen-lg mx-auto shadow-md mt-12 p-2 border border-gray-200 rounded-md flex flex-col justify-self-start" ]
+        [ tableHeader model
+        , tableBody rows
+        , pagination model.currentPageIndex (List.length visibleRows) (List.length reversed)
+        ]
+
+
 view : Model -> Html Msg
 view model =
-    layout model
+    Html.div [ class "absolute inset-0 overflow-hidden pb-6" ]
+        [ Html.div [ class "inset-x-0 h-20 bg-black top-0" ] []
+        , table model
+        ]
