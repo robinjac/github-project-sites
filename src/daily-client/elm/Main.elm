@@ -6,6 +6,7 @@ import Html exposing (Attribute, Html)
 import Html.Attributes as Attr exposing (class, colspan, value)
 import Html.Events exposing (onClick, onInput)
 import Icons
+import Iso8601
 import Maybe exposing (withDefault)
 
 
@@ -118,13 +119,23 @@ dailyUrl { selectedProject, hostRepository } branch =
     String.join "/" [ "/" ++ hostRepository, .name selectedProject, branch.slug, "branch" ]
 
 
+formatIso8601 : String -> String
+formatIso8601 str =
+    case Iso8601.toTime str of
+        Ok posix ->
+            Iso8601.fromTime posix |> String.dropRight 5 |> String.split "T" |> String.join " "
+
+        Err _ ->
+            "N/A"
+
+
 rowElement : Model -> RowType -> Branch -> Html Msg
 rowElement model rowType branch =
     Html.tr [ rowClass rowType ]
         [ Html.td []
             [ Html.text branch.name
             ]
-        , Html.td [ class "w-40" ] [ Html.text branch.date ]
+        , Html.td [ class "w-40" ] [ Html.text (formatIso8601 branch.date) ]
         , Html.td [ class "w-10 flex justify-center items-center" ]
             [ Html.a
                 [ class "text-gray-900"
