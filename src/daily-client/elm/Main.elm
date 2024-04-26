@@ -272,7 +272,7 @@ table model =
         rows =
             firstRows ++ lastRow
     in
-    Html.div [ class "max-w-screen-lg mx-auto shadow-md mt-12 p-2 border border-gray-200 rounded-md flex flex-col justify-self-start" ]
+    Html.div [ class "max-w-screen-lg mx-auto h-[calc(100vh-11rem)] shadow-md mt-12 p-2 border border-gray-200 rounded-md flex flex-col justify-self-start" ]
         [ tableHeader model
         , tableBody rows
         , pagination model.currentPageIndex (List.length visibleRows) (List.length reversed)
