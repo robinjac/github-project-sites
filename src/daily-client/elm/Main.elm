@@ -282,6 +282,6 @@ table model =
 view : Model -> Html Msg
 view model =
     Html.div [ class "absolute inset-0 overflow-hidden pb-6" ]
-        [ Html.div [ class "inset-x-0 h-20 bg-blue top-0 shadow-md" ] []
+        [ Html.div [ class "inset-x-0 h-20 bg-teal-900 top-0 shadow-lg" ] []
         , table model
         ]
