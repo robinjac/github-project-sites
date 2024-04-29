@@ -87,3 +87,19 @@ chevronDoubleLeft =
             ]
             []
         ]
+
+
+logo color label =
+    svg
+        [ viewBox "0 0 100 100"
+        ]
+        [ text_
+            [ fill color
+            , x "0"
+            , y "0"
+            , dominantBaseline "hanging"
+            , textLength "100"
+            , lengthAdjust "spacing"
+            ]
+            [ Svg.text label ]
+        ]

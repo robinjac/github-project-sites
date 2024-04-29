@@ -166,7 +166,7 @@ rowClass row =
 
 tableBody : List (Html Msg) -> Html Msg
 tableBody rows =
-    Html.table [ class "mt-8 w-full box-content" ]
+    Html.table [ class "mt-4 w-full box-content" ]
         [ Html.thead []
             [ Html.tr [ rowClass NotLastRow ]
                 [ Html.th [ class "text-left" ] [ Html.text "Branch" ]
@@ -241,9 +241,9 @@ pagination page rows pages =
             "border border-gray-300 bg-gray-200 text-gray-900 rounded-md mr-1 w-8 h-8 cursor-pointer select-none inline-flex justify-center items-center"
     in
     Html.nav [ class "w-full flex justify-between items-center mt-auto" ]
-        [ Html.div [ class "inline-flex items-center ml-2" ] [ Html.text (String.fromInt (1 + visablePages) ++ "-" ++ String.fromInt (rows + visablePages)), Html.text (" of " ++ String.fromInt pages) ]
+        [ Html.div [ class "inline-flex items-center" ] [ Html.text (String.fromInt (1 + visablePages) ++ "-" ++ String.fromInt (rows + visablePages)), Html.text (" of " ++ String.fromInt pages) ]
         , Html.div
-            [ class "inline-flex mr-2" ]
+            [ class "inline-flex" ]
             [ Html.div [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Start) ] [ Icons.chevronDoubleLeft ]
             , Html.div [ class (liClasses ++ shouldDisable (page == 0)), onClick (Pagination Prev) ] [ Icons.chevronLeft ]
             , Html.div [ class (liClasses ++ shouldDisable (1 + visablePages + maxRows >= pages)), onClick (Pagination Next) ] [ Icons.chevronRight ]
@@ -272,7 +272,7 @@ table model =
         rows =
             firstRows ++ lastRow
     in
-    Html.div [ class "max-w-screen-lg mx-auto h-[calc(100vh-11rem)] shadow-md mt-12 p-2 border border-gray-200 rounded-md flex flex-col justify-self-start" ]
+    Html.div [ class "bg-white max-w-screen-lg mx-auto h-[calc(100vh-11rem)] shadow-md mt-12 p-5 pb-2 border border-gray-200 rounded-md flex flex-col justify-self-start" ]
         [ tableHeader model
         , tableBody rows
         , pagination model.currentPageIndex (List.length visibleRows) (List.length reversed)
@@ -281,7 +281,13 @@ table model =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ class "absolute inset-0 overflow-hidden pb-6" ]
-        [ Html.div [ class "inset-x-0 h-20 bg-teal-900 top-0 shadow-lg" ] []
+    Html.div [ class "absolute inset-0 overflow-hidden bg-neutral-100" ]
+        [ Html.div [ class "relative inset-x-0 h-20 bg-teal-800 top-0 shadow-lg" ]
+            [ Html.div [ class "relative h-full max-w-screen-lg mx-auto pt-7 px-5" ]
+                [ Html.div [ class "relative left-0 w-48 h-full overflow-hidden" ]
+                    [ Icons.logo "white" "Daily Sites"
+                    ]
+                ]
+            ]
         , table model
         ]
