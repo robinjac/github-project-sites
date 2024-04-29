@@ -46,6 +46,12 @@ type alias Model =
     DailySiteState DailySiteData
 
 
+type ApplicationModel
+    = Loading
+    | Error String
+    | Success Model
+
+
 type Msg
     = SelectProject Project
     | Pagination Page
@@ -56,62 +62,62 @@ maxRows =
     10
 
 
-init : DailySiteData -> ( Model, Cmd Msg )
+init : DailySiteData -> ( ApplicationModel, Cmd Msg )
 init meta =
-    ( { selectedProject = meta.selectedProject
-      , projects = meta.projects
-      , hostRepository = meta.hostRepository
-      , owner = meta.owner
-      , currentPageIndex = 0
-      }
+    ( Loading
     , Cmd.none
     )
 
 
-subscriptions : Model -> Sub Msg
+subscriptions : ApplicationModel -> Sub Msg
 subscriptions _ =
     Sub.none
 
 
-main : Program DailySiteData Model Msg
+main : Program DailySiteData ApplicationModel Msg
 main =
     Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        SelectProject project ->
-            ( { model | selectedProject = project, currentPageIndex = 0 }, Cmd.none )
+update : Msg -> ApplicationModel -> ( ApplicationModel, Cmd Msg )
+update msg applicationModel =
+    case applicationModel of
+        Success model ->
+            case msg of
+                SelectProject project ->
+                    ( Success { model | selectedProject = project, currentPageIndex = 0 }, Cmd.none )
 
-        Pagination page ->
-            let
-                maxIndex =
-                    List.length model.selectedProject.branches // maxRows
+                Pagination page ->
+                    let
+                        maxIndex =
+                            List.length model.selectedProject.branches // maxRows
 
-                nextPageIndex =
-                    case page of
-                        Start ->
-                            0
+                        nextPageIndex =
+                            case page of
+                                Start ->
+                                    0
 
-                        Prev ->
-                            if model.currentPageIndex == 0 then
-                                model.currentPageIndex
+                                Prev ->
+                                    if model.currentPageIndex == 0 then
+                                        model.currentPageIndex
 
-                            else
-                                model.currentPageIndex - 1
+                                    else
+                                        model.currentPageIndex - 1
 
-                        Next ->
-                            if model.currentPageIndex >= maxIndex then
-                                model.currentPageIndex
+                                Next ->
+                                    if model.currentPageIndex >= maxIndex then
+                                        model.currentPageIndex
 
-                            else
-                                model.currentPageIndex + 1
+                                    else
+                                        model.currentPageIndex + 1
 
-                        End ->
-                            maxIndex
-            in
-            ( { model | currentPageIndex = nextPageIndex }, Cmd.none )
+                                End ->
+                                    maxIndex
+                    in
+                    ( Success { model | currentPageIndex = nextPageIndex }, Cmd.none )
+
+        _ ->
+            ( applicationModel, Cmd.none )
 
 
 dailyUrl : Model -> Branch -> String
@@ -279,8 +285,8 @@ table model =
         ]
 
 
-view : Model -> Html Msg
-view model =
+view : ApplicationModel -> Html Msg
+view applicationModel =
     Html.div [ class "absolute inset-0 overflow-hidden bg-neutral-100" ]
         [ Html.div [ class "relative inset-x-0 h-20 bg-teal-800 top-0 shadow-lg" ]
             [ Html.div [ class "relative h-full max-w-screen-lg mx-auto pt-7 px-5" ]
@@ -289,5 +295,13 @@ view model =
                     ]
                 ]
             ]
-        , table model
+        , case applicationModel of
+            Loading ->
+                Html.text "loading"
+
+            Error reason ->
+                Html.text ("oops something went wrong! " ++ reason)
+
+            Success model ->
+                table model
         ]
