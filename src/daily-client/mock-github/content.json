@@ -1,0 +1,82 @@
+[
+  {
+    "name": "README.md",
+    "path": "README.md",
+    "sha": "b341df2054155715ab420c9c069eb81b020f2c52",
+    "size": 106,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/README.md?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/blob/master/README.md",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/b341df2054155715ab420c9c069eb81b020f2c52",
+    "download_url": "https://raw.githubusercontent.com/robinjac/daily-sites/master/README.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/README.md?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/b341df2054155715ab420c9c069eb81b020f2c52",
+      "html": "https://github.com/robinjac/daily-sites/blob/master/README.md"
+    }
+  },
+  {
+    "name": "index.html",
+    "path": "index.html",
+    "sha": "b55a1c0906e4bc4aedc6e997a20f0bc1cc260ce6",
+    "size": 345,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/index.html?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/blob/master/index.html",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/b55a1c0906e4bc4aedc6e997a20f0bc1cc260ce6",
+    "download_url": "https://raw.githubusercontent.com/robinjac/daily-sites/master/index.html",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/index.html?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/b55a1c0906e4bc4aedc6e997a20f0bc1cc260ce6",
+      "html": "https://github.com/robinjac/daily-sites/blob/master/index.html"
+    }
+  },
+  {
+    "name": "index.js",
+    "path": "index.js",
+    "sha": "c09326cc13b215377f1b8787ffdb849d0a803c41",
+    "size": 1796,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/index.js?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/blob/master/index.js",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/c09326cc13b215377f1b8787ffdb849d0a803c41",
+    "download_url": "https://raw.githubusercontent.com/robinjac/daily-sites/master/index.js",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/index.js?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/blobs/c09326cc13b215377f1b8787ffdb849d0a803c41",
+      "html": "https://github.com/robinjac/daily-sites/blob/master/index.js"
+    }
+  },
+  {
+    "name": "robinjac-interest-rate-calculator",
+    "path": "robinjac-interest-rate-calculator",
+    "sha": "1fe245fbd64048d45413e94d5eea04fbbd8a704b",
+    "size": 0,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-interest-rate-calculator?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/tree/master/robinjac-interest-rate-calculator",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/trees/1fe245fbd64048d45413e94d5eea04fbbd8a704b",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-interest-rate-calculator?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/trees/1fe245fbd64048d45413e94d5eea04fbbd8a704b",
+      "html": "https://github.com/robinjac/daily-sites/tree/master/robinjac-interest-rate-calculator"
+    }
+  },
+  {
+    "name": "robinjac-json2html-toolkit",
+    "path": "robinjac-json2html-toolkit",
+    "sha": "aa21d848b4f0b3164b9062529dafd87675ab1055",
+    "size": 0,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-json2html-toolkit?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/tree/master/robinjac-json2html-toolkit",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/trees/aa21d848b4f0b3164b9062529dafd87675ab1055",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-json2html-toolkit?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/trees/aa21d848b4f0b3164b9062529dafd87675ab1055",
+      "html": "https://github.com/robinjac/daily-sites/tree/master/robinjac-json2html-toolkit"
+    }
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "name": "main",
+    "path": "robinjac-interest-rate-calculator/main",
+    "sha": "3af26fe6e577535e1c1107c860178fa624dc6d60",
+    "size": 0,
+    "url": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-interest-rate-calculator/main?ref=master",
+    "html_url": "https://github.com/robinjac/daily-sites/tree/master/robinjac-interest-rate-calculator/main",
+    "git_url": "https://api.github.com/repos/robinjac/daily-sites/git/trees/3af26fe6e577535e1c1107c860178fa624dc6d60",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/robinjac/daily-sites/contents/robinjac-interest-rate-calculator/main?ref=master",
+      "git": "https://api.github.com/repos/robinjac/daily-sites/git/trees/3af26fe6e577535e1c1107c860178fa624dc6d60",
+      "html": "https://github.com/robinjac/daily-sites/tree/master/robinjac-interest-rate-calculator/main"
+    }
+  }
+]
