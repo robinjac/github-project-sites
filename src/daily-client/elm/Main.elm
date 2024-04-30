@@ -5,9 +5,11 @@ import Dict exposing (Dict)
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attr exposing (class, colspan, value)
 import Html.Events exposing (onClick, onInput)
+import Http
 import Icons
 import Iso8601
-import Maybe exposing (withDefault)
+import Json.Decode exposing (Decoder, field, list, map3, string, succeed)
+import Maybe exposing (Maybe, withDefault)
 
 
 type alias DailySiteData =
@@ -27,6 +29,7 @@ type alias Branch =
 
 type alias Project =
     { name : String
+    , path : String
     , branches : List Branch
     }
 
@@ -48,13 +51,15 @@ type alias Model =
 
 type ApplicationModel
     = Loading
-    | Error String
+    | Error
     | Success Model
 
 
 type Msg
     = SelectProject Project
     | Pagination Page
+    | GotProjects (Result Http.Error (List Project))
+    | GotBranches (Result Http.Error (List Branch))
 
 
 maxRows : Int
@@ -62,10 +67,10 @@ maxRows =
     10
 
 
-init : DailySiteData -> ( ApplicationModel, Cmd Msg )
-init meta =
+init : () -> ( ApplicationModel, Cmd Msg )
+init _ =
     ( Loading
-    , Cmd.none
+    , getProjects
     )
 
 
@@ -74,20 +79,92 @@ subscriptions _ =
     Sub.none
 
 
-main : Program DailySiteData ApplicationModel Msg
+main : Program () ApplicationModel Msg
 main =
     Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
 
 
-update : Msg -> ApplicationModel -> ( ApplicationModel, Cmd Msg )
-update msg applicationModel =
+produrl =
+    "https://api.github.com/repos/robinjac/daily-sites/contents/"
+
+
+testurl =
+    "../test/view_state_2.json"
+
+
+url : Maybe String -> String
+url maybePath =
+    testurl
+        ++ withDefault "" maybePath
+
+
+projectDecoder : Decoder Project
+projectDecoder =
+    map3 Project
+        (field "name" string)
+        (field "path" string)
+        (succeed [])
+
+
+branchDecoder : Decoder Branch
+branchDecoder =
+    map3 Branch
+        (field "name" string)
+        (field "slug" string)
+        (field "date" string)
+
+
+getProjects : Cmd Msg
+getProjects =
+    Http.get
+        { url = url Nothing
+        , expect = Http.expectJson GotProjects (list projectDecoder)
+        }
+
+
+getBranches : Project -> Cmd Msg
+getBranches project =
+    Http.get
+        { url = url (Just project.path)
+        , expect = Http.expectJson GotBranches (list branchDecoder)
+        }
+
+
+handleSuccess : ApplicationModel -> (Model -> Model) -> ( ApplicationModel, Cmd Msg )
+handleSuccess applicationModel updater =
     case applicationModel of
         Success model ->
-            case msg of
-                SelectProject project ->
-                    ( Success { model | selectedProject = project, currentPageIndex = 0 }, Cmd.none )
+            ( Success (updater model), Cmd.none )
 
-                Pagination page ->
+        _ ->
+            ( applicationModel, Cmd.none )
+
+
+update : Msg -> ApplicationModel -> ( ApplicationModel, Cmd Msg )
+update msg applicationModel =
+    case msg of
+        GotProjects result ->
+            case result of
+                Ok projects ->
+                    ( Loading, Cmd.none )
+
+                Err _ ->
+                    ( Error, Cmd.none )
+
+        GotBranches result ->
+            case result of
+                Ok branches ->
+                    ( Loading, Cmd.none )
+
+                Err _ ->
+                    ( Error, Cmd.none )
+
+        SelectProject project ->
+            handleSuccess applicationModel (\model -> { model | selectedProject = project, currentPageIndex = 0 })
+
+        Pagination page ->
+            handleSuccess applicationModel
+                (\model ->
                     let
                         maxIndex =
                             List.length model.selectedProject.branches // maxRows
@@ -114,10 +191,8 @@ update msg applicationModel =
                                 End ->
                                     maxIndex
                     in
-                    ( Success { model | currentPageIndex = nextPageIndex }, Cmd.none )
-
-        _ ->
-            ( applicationModel, Cmd.none )
+                    { model | currentPageIndex = nextPageIndex }
+                )
 
 
 dailyUrl : Model -> Branch -> String
@@ -299,8 +374,8 @@ view applicationModel =
             Loading ->
                 Html.text "loading"
 
-            Error reason ->
-                Html.text ("oops something went wrong! " ++ reason)
+            Error ->
+                Html.text "oops something went wrong!"
 
             Success model ->
                 table model
