@@ -8,7 +8,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Icons
 import Iso8601
-import Json.Decode exposing (Decoder, field, list, map3, string, succeed)
+import Json.Decode exposing (Decoder, andThen, field, list, map, map3, maybe, string, succeed)
 import Maybe exposing (Maybe, withDefault)
 
 
@@ -89,7 +89,7 @@ produrl =
 
 
 testurl =
-    "../test/view_state_2.json"
+    "../mock-github/content.json"
 
 
 url : Maybe String -> String
@@ -98,12 +98,24 @@ url maybePath =
         ++ withDefault "" maybePath
 
 
-projectDecoder : Decoder Project
+projectDecoder : Decoder (Maybe Project)
 projectDecoder =
-    map3 Project
-        (field "name" string)
-        (field "path" string)
-        (succeed [])
+    let
+        decodeProject =
+            map3 Project
+                (field "name" string)
+                (field "path" string)
+                (succeed [])
+    in
+    field "dir" string
+        |> andThen
+            (\value ->
+                if value == "dir" then
+                    map Just decodeProject
+
+                else
+                    succeed Nothing
+            )
 
 
 branchDecoder : Decoder Branch
@@ -118,7 +130,7 @@ getProjects : Cmd Msg
 getProjects =
     Http.get
         { url = url Nothing
-        , expect = Http.expectJson GotProjects (list projectDecoder)
+        , expect = Http.expectJson GotProjects (map (List.filterMap identity) (list projectDecoder))
         }
 
 
