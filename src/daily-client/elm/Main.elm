@@ -216,6 +216,10 @@ handleHttpResult httpResult handler =
             ( Error, Cmd.none )
 
 
+sameLength a b =
+    List.length a == List.length b
+
+
 update : Msg -> ApplicationModel -> ( ApplicationModel, Cmd Msg )
 update msg applicationModel =
     case msg of
@@ -231,9 +235,6 @@ update msg applicationModel =
                     case applicationModel of
                         Loading stuff ->
                             let
-                                isDone branches_ =
-                                    List.length branches_ == List.length branches
-
                                 resolvedBranch =
                                     { branch | name = resolvedName, date = resolvedDate }
 
@@ -246,7 +247,7 @@ update msg applicationModel =
                                                         newProject =
                                                             { project_ | branches = resolvedBranch :: project_.branches }
                                                     in
-                                                    ( newProject, isDone newProject.branches )
+                                                    ( newProject, sameLength newProject.branches branches )
                                                 )
                                             )
                                             stuff.resolved
@@ -256,23 +257,29 @@ update msg applicationModel =
                                             newProject =
                                                 { project | branches = resolvedBranch :: project.branches }
                                         in
-                                        Dict.insert project.name ( newProject, isDone newProject.branches ) stuff.resolved
+                                        Dict.insert project.name ( newProject, sameLength newProject.branches branches ) stuff.resolved
 
-                                projects_ =
-                                    newResolved |> Dict.values |> List.map Tuple.first
+                                resolvedProjects =
+                                    newResolved
+                                        |> Dict.values
+                                        |> List.map Tuple.first
 
                                 branchesCompleted =
-                                    newResolved |> Dict.values |> List.map Tuple.second |> List.all ((==) True)
-
-                                maybeSelectedProject =
-                                    List.head projects_
+                                    newResolved
+                                        |> Dict.values
+                                        |> List.map Tuple.second
+                                        |> List.all ((==) True)
                             in
-                            case ( branchesCompleted && List.length projects_ == List.length projects, maybeSelectedProject ) of
+                            case
+                                ( branchesCompleted && sameLength resolvedProjects projects
+                                , List.head resolvedProjects
+                                )
+                            of
                                 ( True, Just selectedProject ) ->
                                     ( Success
                                         { owner = stuff.owner
                                         , hostRepository = stuff.hostRepository
-                                        , projects = projects_
+                                        , projects = resolvedProjects
                                         , selectedProject = selectedProject
                                         , currentPageIndex = 0
                                         }
