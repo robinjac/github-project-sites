@@ -49,8 +49,12 @@ type alias Model =
     DailySiteState DailySiteData
 
 
+type alias Stuff =
+    { owner : String, hostRepository : String, projects : List Project, resolvedProjects : List Project }
+
+
 type ApplicationModel
-    = Loading
+    = Loading Stuff
     | Error
     | Success Model
 
@@ -59,7 +63,7 @@ type Msg
     = SelectProject Project
     | Pagination Page
     | GotProjects (Result Http.Error (List Project))
-    | GotBranches (Result Http.Error (List Branch))
+    | GotBranches Project (Result Http.Error (List Branch))
 
 
 maxRows : Int
@@ -70,6 +74,11 @@ maxRows =
 init : () -> ( ApplicationModel, Cmd Msg )
 init _ =
     ( Loading
+        { owner = "robinjac"
+        , hostRepository = "daily-sites"
+        , projects = []
+        , resolvedProjects = []
+        }
     , getProjects
     )
 
@@ -81,7 +90,12 @@ subscriptions _ =
 
 main : Program () ApplicationModel Msg
 main =
-    Browser.element { init = init, subscriptions = subscriptions, update = update, view = view }
+    Browser.element
+        { init = init
+        , subscriptions = subscriptions
+        , update = update
+        , view = view
+        }
 
 
 produrl =
@@ -138,12 +152,26 @@ getBranches : Project -> Cmd Msg
 getBranches project =
     Http.get
         { url = url (Just project.path)
-        , expect = Http.expectJson GotBranches (list branchDecoder)
+        , expect = Http.expectJson (GotBranches project) (list branchDecoder)
         }
 
 
-handleSuccess : ApplicationModel -> (Model -> Model) -> ( ApplicationModel, Cmd Msg )
-handleSuccess applicationModel updater =
+getAllBranches : ApplicationModel -> List Project -> ( ApplicationModel, Cmd Msg )
+getAllBranches applicationModel projects =
+    let
+        requests =
+            projects |> List.map getBranches |> List.reverse
+    in
+    case applicationModel of
+        Loading stuff ->
+            ( Loading stuff, Cmd.batch requests )
+
+        _ ->
+            ( applicationModel, Cmd.none )
+
+
+updateModel : ApplicationModel -> (Model -> Model) -> ( ApplicationModel, Cmd Msg )
+updateModel applicationModel updater =
     case applicationModel of
         Success model ->
             ( Success (updater model), Cmd.none )
@@ -158,24 +186,48 @@ update msg applicationModel =
         GotProjects result ->
             case result of
                 Ok projects ->
-                    ( Loading, Cmd.none )
+                    getAllBranches applicationModel projects
 
                 Err _ ->
                     ( Error, Cmd.none )
 
-        GotBranches result ->
+        GotBranches project result ->
             case result of
                 Ok branches ->
-                    ( Loading, Cmd.none )
+                    case applicationModel of
+                        Loading stuff ->
+                            let
+                                resolvedProject =
+                                    { project | branches = branches }
+
+                                newStuff =
+                                    { stuff | resolvedProjects = resolvedProject :: stuff.resolvedProjects }
+                            in
+                            if List.length stuff.projects == List.length newStuff.resolvedProjects then
+                                ( Success
+                                    { owner = newStuff.owner
+                                    , hostRepository = newStuff.hostRepository
+                                    , projects = newStuff.resolvedProjects
+                                    , selectedProject = resolvedProject
+                                    , currentPageIndex = 0
+                                    }
+                                , Cmd.none
+                                )
+
+                            else
+                                ( Loading newStuff, Cmd.none )
+
+                        _ ->
+                            ( applicationModel, Cmd.none )
 
                 Err _ ->
                     ( Error, Cmd.none )
 
         SelectProject project ->
-            handleSuccess applicationModel (\model -> { model | selectedProject = project, currentPageIndex = 0 })
+            updateModel applicationModel (\model -> { model | selectedProject = project, currentPageIndex = 0 })
 
         Pagination page ->
-            handleSuccess applicationModel
+            updateModel applicationModel
                 (\model ->
                     let
                         maxIndex =
@@ -383,7 +435,7 @@ view applicationModel =
                 ]
             ]
         , case applicationModel of
-            Loading ->
+            Loading _ ->
                 Html.text "loading"
 
             Error ->
