@@ -10,6 +10,7 @@ import Icons
 import Iso8601
 import Json.Decode exposing (Decoder, andThen, field, list, map, map2, map3, maybe, string, succeed)
 import Maybe exposing (Maybe, withDefault)
+import Tuple
 
 
 type alias DailySiteData =
@@ -55,7 +56,7 @@ type alias Model =
 
 
 type alias Stuff =
-    { owner : String, hostRepository : String, resolved : Dict Project Project }
+    { owner : String, hostRepository : String, resolved : Dict String ( Project, Bool ) }
 
 
 type ApplicationModel
@@ -231,30 +232,47 @@ update msg applicationModel =
                     case applicationModel of
                         Loading stuff ->
                             let
+                                isDone branches_ =
+                                    List.length branches_ == List.length branches
+
                                 resolvedBranch =
                                     { branch | name = resolvedName, date = resolvedDate }
 
-                                newStuff =
-                                    if Dict.member project stuff.resolved then
-                                        Dict.update project (Maybe.map (\project_ -> { project_ | branches = resolvedBranch :: project_.branches })) stuff.resolved
+                                newResolved =
+                                    if Dict.member project.name stuff.resolved then
+                                        Dict.update project.name
+                                            (Maybe.map
+                                                (\( project_, _ ) ->
+                                                    let
+                                                        newProject =
+                                                            { project_ | branches = resolvedBranch :: project_.branches }
+                                                    in
+                                                    ( newProject, isDone newProject.branches )
+                                                )
+                                            )
+                                            stuff.resolved
 
                                     else
-                                        Dict.insert project { project | branches = resolvedBranch :: project.branches }
-
-                                isDone =
-                                    Dict.size newStuff.resolved == List.length projects
+                                        let
+                                            newProject =
+                                                { project | branches = resolvedBranch :: project.branches }
+                                        in
+                                        Dict.insert project.name ( newProject, isDone newProject.branches ) stuff.resolved
 
                                 projects_ =
-                                    Dict.values newStuff.resolved
+                                    newResolved |> Dict.values |> List.map Tuple.first
+
+                                completed =
+                                    newResolved |> Dict.values |> List.map Tuple.second |> List.all ((==) True)
 
                                 maybeSelectedProject =
                                     List.head projects_
                             in
-                            case ( isDone, maybeSelectedProject ) of
+                            case ( completed, maybeSelectedProject ) of
                                 ( True, Just selectedProject ) ->
                                     ( Success
-                                        { owner = newStuff.owner
-                                        , hostRepository = newStuff.hostRepository
+                                        { owner = stuff.owner
+                                        , hostRepository = stuff.hostRepository
                                         , projects = projects_
                                         , selectedProject = selectedProject
                                         , currentPageIndex = 0
@@ -263,7 +281,7 @@ update msg applicationModel =
                                     )
 
                                 _ ->
-                                    ( Loading newStuff, Cmd.none )
+                                    ( Loading { stuff | resolved = newResolved }, Cmd.none )
 
                         _ ->
                             ( applicationModel, Cmd.none )
