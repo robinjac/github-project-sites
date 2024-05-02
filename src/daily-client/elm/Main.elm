@@ -13,13 +13,6 @@ import Maybe exposing (Maybe, withDefault)
 import Tuple
 
 
-type alias DailySiteData =
-    { owner : String
-    , projects : List Project
-    , hostRepository : String
-    }
-
-
 type alias Branch =
     { name : String
     , path : String
@@ -47,8 +40,15 @@ type Page
     | Next
 
 
-type alias DailySiteState model =
-    { model | currentPageIndex : Int, selectedProject : Project }
+type alias DailySiteData =
+    { owner : String
+    , projects : List Project
+    , hostRepository : String
+    }
+
+
+type alias DailySiteState data =
+    { data | currentPageIndex : Int, selectedProject : Project }
 
 
 type alias Model =
