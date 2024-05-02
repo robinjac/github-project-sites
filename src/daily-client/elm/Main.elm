@@ -14,7 +14,6 @@ import Maybe exposing (Maybe, withDefault)
 
 type alias DailySiteData =
     { owner : String
-    , selectedProject : Project
     , projects : List Project
     , hostRepository : String
     }
@@ -48,7 +47,7 @@ type Page
 
 
 type alias DailySiteState model =
-    { model | currentPageIndex : Int }
+    { model | currentPageIndex : Int, selectedProject : Project }
 
 
 type alias Model =
@@ -56,7 +55,7 @@ type alias Model =
 
 
 type alias Stuff =
-    { owner : String, hostRepository : String, projects : List Project }
+    { owner : String, hostRepository : String, resolved : Dict Project Project }
 
 
 type ApplicationModel
@@ -83,7 +82,7 @@ init _ =
     ( Loading
         { owner = "robinjac"
         , hostRepository = "daily-sites"
-        , projects = []
+        , resolved = Dict.empty
         }
     , getProjects
     )
@@ -164,7 +163,7 @@ getBranches projects project =
 getBranchData : List Project -> Project -> List Branch -> Branch -> Cmd Msg
 getBranchData projects project branches branch =
     Http.get
-        { url = url (Just branch.path)
+        { url = "https://raw.githubusercontent.com/robinjac/daily-sites/master/" ++ branch.path ++ "/branch.json"
         , expect = Http.expectJson (GotBranchData projects project branches branch) branchDataDecoder
         }
 
@@ -235,38 +234,36 @@ update msg applicationModel =
                                 resolvedBranch =
                                     { branch | name = resolvedName, date = resolvedDate }
 
-                                newProject =
-                                    { project | branches = resolvedBranch :: project.branches }
-
-                                isBranchesResolved =
-                                    List.length branches == List.length newProject.branches
-
-                                ( newStuff, isDone ) =
-                                    if isBranchesResolved then
-                                        let
-                                            stuff_ =
-                                                { stuff | projects = newProject :: stuff.projects }
-                                        in
-                                        ( stuff_
-                                        , List.length projects == List.length stuff_.projects
-                                        )
+                                newStuff =
+                                    if Dict.member project stuff.resolved then
+                                        Dict.update project (Maybe.map (\project_ -> { project_ | branches = resolvedBranch :: project_.branches })) stuff.resolved
 
                                     else
-                                        ( stuff, False )
-                            in
-                            if isDone then
-                                ( Success
-                                    { owner = newStuff.owner
-                                    , hostRepository = newStuff.hostRepository
-                                    , projects = newStuff.projects
-                                    , selectedProject = newProject
-                                    , currentPageIndex = 0
-                                    }
-                                , Cmd.none
-                                )
+                                        Dict.insert project { project | branches = resolvedBranch :: project.branches }
 
-                            else
-                                ( Loading newStuff, Cmd.none )
+                                isDone =
+                                    Dict.size newStuff.resolved == List.length projects
+
+                                projects_ =
+                                    Dict.values newStuff.resolved
+
+                                maybeSelectedProject =
+                                    List.head projects_
+                            in
+                            case ( isDone, maybeSelectedProject ) of
+                                ( True, Just selectedProject ) ->
+                                    ( Success
+                                        { owner = newStuff.owner
+                                        , hostRepository = newStuff.hostRepository
+                                        , projects = projects_
+                                        , selectedProject = selectedProject
+                                        , currentPageIndex = 0
+                                        }
+                                    , Cmd.none
+                                    )
+
+                                _ ->
+                                    ( Loading newStuff, Cmd.none )
 
                         _ ->
                             ( applicationModel, Cmd.none )
