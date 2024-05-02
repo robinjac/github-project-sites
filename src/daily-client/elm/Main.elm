@@ -89,16 +89,11 @@ init _ =
     )
 
 
-subscriptions : ApplicationModel -> Sub Msg
-subscriptions _ =
-    Sub.none
-
-
 main : Program () ApplicationModel Msg
 main =
     Browser.element
         { init = init
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         , update = update
         , view = view
         }
