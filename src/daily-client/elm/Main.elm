@@ -330,8 +330,8 @@ update msg applicationModel =
 
 
 dailyUrl : Model -> Branch -> String
-dailyUrl { selectedProject, hostRepository } branch =
-    String.join "/" [ "/" ++ hostRepository, .path selectedProject, "branch" ]
+dailyUrl { hostRepository } branch =
+    String.join "/" [ "/" ++ hostRepository, .path branch, "branch" ]
 
 
 formatIso8601 : String -> String
