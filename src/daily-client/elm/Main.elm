@@ -262,13 +262,13 @@ update msg applicationModel =
                                 projects_ =
                                     newResolved |> Dict.values |> List.map Tuple.first
 
-                                completed =
+                                branchesCompleted =
                                     newResolved |> Dict.values |> List.map Tuple.second |> List.all ((==) True)
 
                                 maybeSelectedProject =
                                     List.head projects_
                             in
-                            case ( completed, maybeSelectedProject ) of
+                            case ( branchesCompleted && List.length projects_ == List.length projects, maybeSelectedProject ) of
                                 ( True, Just selectedProject ) ->
                                     ( Success
                                         { owner = stuff.owner
