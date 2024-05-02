@@ -8,7 +8,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Icons
 import Iso8601
-import Json.Decode exposing (Decoder, andThen, field, list, map, map3, maybe, string, succeed)
+import Json.Decode exposing (Decoder, andThen, field, list, map, map2, map3, maybe, string, succeed)
 import Maybe exposing (Maybe, withDefault)
 
 
@@ -22,8 +22,14 @@ type alias DailySiteData =
 
 type alias Branch =
     { name : String
-    , slug : String
+    , path : String
     , date : String
+    }
+
+
+type alias BranchData =
+    { resolvedName : String
+    , resolvedDate : String
     }
 
 
@@ -50,7 +56,7 @@ type alias Model =
 
 
 type alias Stuff =
-    { owner : String, hostRepository : String, projects : List Project, resolvedProjects : List Project }
+    { owner : String, hostRepository : String, projects : List Project }
 
 
 type ApplicationModel
@@ -63,7 +69,8 @@ type Msg
     = SelectProject Project
     | Pagination Page
     | GotProjects (Result Http.Error (List Project))
-    | GotBranches Project (Result Http.Error (List Branch))
+    | GotBranches (List Project) Project (Result Http.Error (List Branch))
+    | GotBranchData (List Project) Project (List Branch) Branch (Result Http.Error BranchData)
 
 
 maxRows : Int
@@ -77,7 +84,6 @@ init _ =
         { owner = "robinjac"
         , hostRepository = "daily-sites"
         , projects = []
-        , resolvedProjects = []
         }
     , getProjects
     )
@@ -98,17 +104,9 @@ main =
         }
 
 
-produrl =
-    "https://api.github.com/repos/robinjac/daily-sites/contents/"
-
-
-testurl =
-    "../mock-github/content.json"
-
-
 url : Maybe String -> String
 url maybePath =
-    testurl
+    "https://api.github.com/repos/robinjac/daily-sites/contents/"
         ++ withDefault "" maybePath
 
 
@@ -121,7 +119,7 @@ projectDecoder =
                 (field "path" string)
                 (succeed [])
     in
-    field "dir" string
+    field "type" string
         |> andThen
             (\value ->
                 if value == "dir" then
@@ -135,8 +133,15 @@ projectDecoder =
 branchDecoder : Decoder Branch
 branchDecoder =
     map3 Branch
+        (succeed "-")
+        (field "path" string)
+        (succeed "-")
+
+
+branchDataDecoder : Decoder BranchData
+branchDataDecoder =
+    map2 BranchData
         (field "name" string)
-        (field "slug" string)
         (field "date" string)
 
 
@@ -148,11 +153,19 @@ getProjects =
         }
 
 
-getBranches : Project -> Cmd Msg
-getBranches project =
+getBranches : List Project -> Project -> Cmd Msg
+getBranches projects project =
     Http.get
         { url = url (Just project.path)
-        , expect = Http.expectJson (GotBranches project) (list branchDecoder)
+        , expect = Http.expectJson (GotBranches projects project) (list branchDecoder)
+        }
+
+
+getBranchData : List Project -> Project -> List Branch -> Branch -> Cmd Msg
+getBranchData projects project branches branch =
+    Http.get
+        { url = url (Just branch.path)
+        , expect = Http.expectJson (GotBranchData projects project branches branch) branchDataDecoder
         }
 
 
@@ -160,7 +173,21 @@ getAllBranches : ApplicationModel -> List Project -> ( ApplicationModel, Cmd Msg
 getAllBranches applicationModel projects =
     let
         requests =
-            projects |> List.map getBranches |> List.reverse
+            projects |> List.map (getBranches projects)
+    in
+    case applicationModel of
+        Loading stuff ->
+            ( Loading stuff, Cmd.batch requests )
+
+        _ ->
+            ( applicationModel, Cmd.none )
+
+
+getAllBranchData : ApplicationModel -> List Project -> Project -> List Branch -> ( ApplicationModel, Cmd Msg )
+getAllBranchData applicationModel projects project branches =
+    let
+        requests =
+            branches |> List.map (getBranchData projects project branches)
     in
     case applicationModel of
         Loading stuff ->
@@ -191,24 +218,48 @@ update msg applicationModel =
                 Err _ ->
                     ( Error, Cmd.none )
 
-        GotBranches project result ->
+        GotBranches projects project result ->
             case result of
                 Ok branches ->
+                    getAllBranchData applicationModel projects project branches
+
+                Err _ ->
+                    ( Error, Cmd.none )
+
+        GotBranchData projects project branches branch result ->
+            case result of
+                Ok { resolvedName, resolvedDate } ->
                     case applicationModel of
                         Loading stuff ->
                             let
-                                resolvedProject =
-                                    { project | branches = branches }
+                                resolvedBranch =
+                                    { branch | name = resolvedName, date = resolvedDate }
 
-                                newStuff =
-                                    { stuff | resolvedProjects = resolvedProject :: stuff.resolvedProjects }
+                                newProject =
+                                    { project | branches = resolvedBranch :: project.branches }
+
+                                isBranchesResolved =
+                                    List.length branches == List.length newProject.branches
+
+                                ( newStuff, isDone ) =
+                                    if isBranchesResolved then
+                                        let
+                                            stuff_ =
+                                                { stuff | projects = newProject :: stuff.projects }
+                                        in
+                                        ( stuff_
+                                        , List.length projects == List.length stuff_.projects
+                                        )
+
+                                    else
+                                        ( stuff, False )
                             in
-                            if List.length stuff.projects == List.length newStuff.resolvedProjects then
+                            if isDone then
                                 ( Success
                                     { owner = newStuff.owner
                                     , hostRepository = newStuff.hostRepository
-                                    , projects = newStuff.resolvedProjects
-                                    , selectedProject = resolvedProject
+                                    , projects = newStuff.projects
+                                    , selectedProject = newProject
                                     , currentPageIndex = 0
                                     }
                                 , Cmd.none
@@ -261,7 +312,7 @@ update msg applicationModel =
 
 dailyUrl : Model -> Branch -> String
 dailyUrl { selectedProject, hostRepository } branch =
-    String.join "/" [ "/" ++ hostRepository, .name selectedProject, branch.slug, "branch" ]
+    String.join "/" [ "/" ++ hostRepository, .path selectedProject, "branch" ]
 
 
 formatIso8601 : String -> String
