@@ -207,28 +207,27 @@ updateModel applicationModel updater =
             ( applicationModel, Cmd.none )
 
 
+handleHttpResult httpResult handler =
+    case httpResult of
+        Ok result ->
+            handler result
+
+        Err _ ->
+            ( Error, Cmd.none )
+
+
 update : Msg -> ApplicationModel -> ( ApplicationModel, Cmd Msg )
 update msg applicationModel =
     case msg of
         GotProjects result ->
-            case result of
-                Ok projects ->
-                    getAllBranches applicationModel projects
-
-                Err _ ->
-                    ( Error, Cmd.none )
+            handleHttpResult result (getAllBranches applicationModel)
 
         GotBranches projects project result ->
-            case result of
-                Ok branches ->
-                    getAllBranchData applicationModel projects project branches
-
-                Err _ ->
-                    ( Error, Cmd.none )
+            handleHttpResult result (getAllBranchData applicationModel projects project)
 
         GotBranchData projects project branches branch result ->
-            case result of
-                Ok { resolvedName, resolvedDate } ->
+            handleHttpResult result
+                (\{ resolvedName, resolvedDate } ->
                     case applicationModel of
                         Loading stuff ->
                             let
@@ -285,9 +284,7 @@ update msg applicationModel =
 
                         _ ->
                             ( applicationModel, Cmd.none )
-
-                Err _ ->
-                    ( Error, Cmd.none )
+                )
 
         SelectProject project ->
             updateModel applicationModel (\model -> { model | selectedProject = project, currentPageIndex = 0 })
